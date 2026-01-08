@@ -63,6 +63,11 @@ public class MedicamentoService {
         Medicamento medicamento = medicamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Medicamento não encontrado"));
 
+        // Não permite alterar medicamentos que foram soft deleted (vendidos)
+        if (medicamento.getDeletado()) {
+            throw new BusinessException("Este medicamento foi inativado permanentemente e não pode ser alterado");
+        }
+
         String nomeNormalizado = StringUtils.normalizeString(request.getNome());
 
         // Verifica se já existe outro medicamento com mesmo nome E dosagem
@@ -90,7 +95,8 @@ public class MedicamentoService {
 
     @Transactional(readOnly = true)
     public List<MedicamentoResponseDTO> listarTodos() {
-        return medicamentoRepository.findAll().stream()
+        // Não retorna medicamentos que foram soft deleted
+        return medicamentoRepository.findByDeletadoFalse().stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
     }
@@ -99,6 +105,12 @@ public class MedicamentoService {
     public MedicamentoResponseDTO buscarPorId(Long id) {
         Medicamento medicamento = medicamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Medicamento não encontrado"));
+
+        // Não permite acessar medicamentos soft deleted
+        if (medicamento.getDeletado()) {
+            throw new ResourceNotFoundException("Medicamento não encontrado");
+        }
+
         return toResponseDTO(medicamento);
     }
 
@@ -109,7 +121,8 @@ public class MedicamentoService {
             throw new ResourceNotFoundException("Categoria não encontrada");
         }
 
-        return medicamentoRepository.findByCategoriaId(categoriaId).stream()
+        // Não retorna medicamentos que foram soft deleted
+        return medicamentoRepository.findByCategoriaIdAndDeletadoFalse(categoriaId).stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
     }

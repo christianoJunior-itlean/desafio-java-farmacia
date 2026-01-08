@@ -29,6 +29,10 @@ public interface MedicamentoRepository extends JpaRepository<Medicamento, Long> 
 
     List<Medicamento> findByAtivoTrue();
 
+    List<Medicamento> findByDeletadoFalse();
+
+    List<Medicamento> findByCategoriaIdAndDeletadoFalse(Long categoriaId);
+
     @Query("SELECT m FROM Medicamento m WHERE m.categoria.id = :categoriaId")
     List<Medicamento> findByCategoriaId(Long categoriaId);
 
